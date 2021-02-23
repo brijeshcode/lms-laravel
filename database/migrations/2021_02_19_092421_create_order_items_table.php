@@ -19,6 +19,8 @@ class CreateOrderItemsTable extends Migration
             $table->integer('order_id');
             $table->integer('course_id');
             $table->string('course_title');
+            $table->decimal('price', 8, 2);
+            $table->decimal('sell_price', 8, 2);
             $table->softDeletes();
             $table->timestamps();
         });

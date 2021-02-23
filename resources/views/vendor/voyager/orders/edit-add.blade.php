@@ -164,7 +164,6 @@
                             @yield('submit-buttons')
                         </div>
 
-                        <input type="hidden" name="created_by" value="{{ Auth::user()->id }}">
                     </form>
 
                     <iframe id="form_target" name="form_target" style="display:none"></iframe>
@@ -356,27 +355,10 @@
                 maxDepth: 1
             });
 
-            /*$( "#sortable" ).sortable();
-            $( "#sortable" ).disableSelection();*/
-
-            // $('.sortable_item').sortable();
-            // $('.sortable_item').disableSelection();
 
             $('.dtable').DataTable();
 
-            /*$( "#sortable" ).sortable({
-              stop: function( event, ui ) {
 
-                updateCurriculumOrders();
-              }
-            });*/
-
-           /* $( ".sortable_item" ).sortable({
-              stop: function( event, ui ) {
-                console.log('test');
-                updateCurriculumOrders();
-              }
-            });*/
         });
 
         function addOrderItems(){
@@ -428,7 +410,7 @@
             js_html += '<td><span class="rewert-quiz" onclick="revertCourse(\''+courseTrId+'\')">'+trashIcon()+'</span></td>';
             js_html += '<td><b>'+title+'</b></td>';
             js_html += '<td class="text-right"><span class="currency">$</span>'+price+'</td>';
-            js_html += '<td class="text-right">1</td>';
+            js_html += '<td class="text-right">1<input type="hidden" name="orderItems[]" value="'+courseid+'" /> </td>';
             js_html += '<td class="text-right"><span class="currency">$</span>'+price+'</td>';
 
             js_html +=  '</tr>';

@@ -404,4 +404,9 @@ class CoursesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseControl
 
         return redirect()->route("voyager.{$dataType->slug}.index")->with($data);
     }
+
+    public function getCources()
+    {
+        return Course::get();
+    }
 }

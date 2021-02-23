@@ -12,20 +12,13 @@ use TCG\Voyager\Events\BreadImagesDeleted;
 use TCG\Voyager\Facades\Voyager;
 use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
 use App\Models\Course;
+use Illuminate\Support\Facades\Validator;
 
 class OrderController extends \TCG\Voyager\Http\Controllers\VoyagerBaseController
 {
     public function create(Request $request)
     {
     	$courses = Course::select('id', 'title', 'price', 'sale_price')->get();
-    	/*$temp = array();
-    	if (!empty($courses)) {
-    		foreach ($courses as $key => $course) {
-    			$temp[$course->id] = $course;
-    		}
-    	}
-    	return $courses = $temp;*/
-
         $slug 		= $this->getSlug($request);
 
         $dataType 	= Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -54,5 +47,47 @@ class OrderController extends \TCG\Voyager\Http\Controllers\VoyagerBaseControlle
 		}
 
         return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'courses' ));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate(
+            ['user_id' => 'required'],
+            ['user_id.required' => 'Customer Field is required.']
+
+        );
+
+        dd($request);
+
+        $slug = $this->getSlug($request);
+        // dd($request);
+        $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
+
+        // Check permission
+        $this->authorize('add', app($dataType->model_name));
+
+        // Validate fields with ajax
+        $val = $this->validateBread($request->all(), $dataType->addRows)->validate();
+
+        $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
+        $data->questions()->sync($request->ques);
+        // $data->questions()->createMany($request->ques);
+
+        event(new BreadDataAdded($dataType, $data));
+
+        if (!$request->has('_tagging')) {
+            if (auth()->user()->can('browse', $data)) {
+                $redirect = redirect()->route("voyager.{$dataType->slug}.index");
+            } else {
+                $redirect = redirect()->back();
+            }
+
+            return $redirect->with([
+                'message'    => __('voyager::generic.successfully_added_new')." {$dataType->getTranslatedAttribute('display_name_singular')}",
+                'alert-type' => 'success',
+            ]);
+        } else {
+            return response()->json(['success' => true, 'data' => $data]);
+        }
     }
 }

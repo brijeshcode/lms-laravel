@@ -10,10 +10,11 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Cashier;
 use Laravel\Cashier\Billable;
 use Laravel\Cashier\PaymentMethod;
+use Laravel\Passport\HasApiTokens;
 
 class User extends \TCG\Voyager\Models\User
 {
-    use Billable;
+    use Billable, HasApiTokens;
     use HasFactory, Notifiable;
 
     /**

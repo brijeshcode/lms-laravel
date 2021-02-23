@@ -22,6 +22,7 @@ class CreateOrdersTable extends Migration
             $table->decimal('order_total', 8, 2);
             $table->string('order_status')->default('pending');
             $table->ipAddress('actor_ip');
+            $table->integer('created_by');
             $table->softDeletes();
 
             // $table->timestamp('created_at')->default(DB::raw('CURRENT_TIMESTAMP'));

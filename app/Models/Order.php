@@ -16,7 +16,8 @@ class Order extends Model
         parent::boot();
         static::creating(function($model)
         {
-            $model->user_id = Auth()->user()->id;
+            // $model->user_id = Auth()->user()->id;
+            $model->created_by = Auth()->user()->id;
             $model->actor_ip = \Request::ip();
         });
 
@@ -34,5 +35,10 @@ class Order extends Model
         {
 
         });
+    }
+
+    public function items()
+    {
+        return $this->hasMany(OrderItems::class, 'order_id')->orderBy('display_order');
     }
 }
