@@ -2,6 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CourseCollection;
+use App\Http\Resources\CourseResource;
+use App\Models\Course;
+use App\Models\Lesson;
+use App\Models\Quiz;
+use App\Models\Section;
+use App\Models\SectionItems;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use TCG\Voyager\Database\Schema\SchemaManager;
@@ -11,12 +18,6 @@ use TCG\Voyager\Events\BreadDataUpdated;
 use TCG\Voyager\Events\BreadImagesDeleted;
 use TCG\Voyager\Facades\Voyager;
 use TCG\Voyager\Http\Controllers\Traits\BreadRelationshipParser;
-use App\Models\Lesson;
-use App\Models\Quiz;
-use App\Models\SectionItems;
-use App\Models\Section;
-use App\Models\Course;
-use Anam\Phpcart\Cart;
 
 
 class CoursesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseController
@@ -24,29 +25,6 @@ class CoursesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseControl
 	public function create(Request $request)
     {
 
-
-        /*$cart->add([
-            'id'       => 1002,
-            'name'     => 'Skinny Jeans',
-            'quantity' => 1,
-            'price'    => 90
-        ]);
-
-        $cart->update([
-            'id'       => 1002,
-            'name'     => 'Hoodie'
-        ]);
-
-        */
-
-        /*resolve('cart')->add([
-            'id'       => 1001,
-            'name'     => 'Skinny Jeans',
-            'quantity' => 1,
-            'price'    => 90
-        ]);*/
-
-        // echo "<pre>"; print_r($cart->items()); echo "</pre>"; die();
     	$lessons 	= Lesson::get();
     	$quizes 	= Quiz::get();
 
@@ -87,8 +65,13 @@ class CoursesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseControl
      *
      * @return \Illuminate\Http\RedirectResponse
      */
+
     public function store(Request $request)
     {
+        /*$temp= json_encode($request->pricing);
+        $request->request->remove('pricing');
+        $request->pricing = $temp;*/
+
         $slug = $this->getSlug($request);
 
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -103,6 +86,13 @@ class CoursesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseControl
 
         $data = $this->insertUpdateData($request, $slug, $dataType->addRows, new $dataType->model_name());
         $courseId = $data->id;
+
+        $temp= json_encode($request->pricing);
+        $request->request->remove('pricing');
+        $request->pricing = $temp;
+        $cource = Course::find($courseId);
+        $cource->pricing = $temp;
+        $cource->save();
 
         if (isset($request->curri)) {
             foreach ($request->curri as $key => $curriculum) {
@@ -138,8 +128,6 @@ class CoursesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseControl
 
     public function show(Request $request, $id)
     {
-
-
         $slug = $this->getSlug($request);
 
         $dataType = Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -287,9 +275,15 @@ class CoursesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseControl
         // Validate fields with ajax
         $val = $this->validateBread($request->all(), $dataType->editRows, $dataType->name, $id)->validate();
         $this->insertUpdateData($request, $slug, $dataType->editRows, $data);
-
+        $temp= json_encode(array_values($request->pricing));
+        $request->pricing = $temp;
+        $cource = Course::find($id);
+        $cource->pricing = $temp;
+        if (isset($request->tax_classes_id)) {
+            $cource->tax_classes_id = $request->tax_classes_id;
+        }
+        $cource->save();
         // dd($id);
-
         event(new BreadDataUpdated($dataType, $data));
 
         if (auth()->user()->can('browse', app($dataType->model_name))) {
@@ -344,11 +338,10 @@ class CoursesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseControl
                     }
                 }
             }
-
         }
+
         Section::whereIn('id' , $oldSections)->delete();
         SectionItems::whereIn('id' , $oldSectionsItems)->delete();
-
 
 
         return $redirect->with([
@@ -405,8 +398,17 @@ class CoursesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseControl
         return redirect()->route("voyager.{$dataType->slug}.index")->with($data);
     }
 
+    // return cources collections for api
     public function getCources()
     {
-        return Course::get();
+        $cources = Course::with('curriculums.items')->where('status', 'active')->paginate();
+        return $cources = new CourseCollection($cources);
+    }
+
+    public function getCource($courseId)
+    {
+        $course = Course::with('curriculums.items')->where('status', 'active')->find($courseId);
+        $course = new CourseResource($course);
+        return $course;
     }
 }

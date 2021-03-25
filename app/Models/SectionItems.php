@@ -45,8 +45,18 @@ class SectionItems extends Model
         // ->where($this->item_type, '=', 'lesson') ;
     }
 
+    public function activeLesson()
+    {
+        return $this->belongsTo(Lesson::class,'item_id', 'id')->where('status', 'active');
+    }
+
     public function quizes()
     {
         return $this->hasOne(Quiz::class, 'id', 'item_id') ;
+    }
+
+    public function activeQuiz()
+    {
+        return $this->belongsTo(Quiz::class,'item_id', 'id')->where('status', 'active');
     }
 }

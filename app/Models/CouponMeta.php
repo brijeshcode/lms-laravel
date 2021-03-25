@@ -6,12 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class OrderItems extends Model
+class CouponMeta extends Model
 {
-    use SoftDeletes;
     use HasFactory;
+    use SoftDeletes;
 
-    protected $fillable = [
-        'order_id', 'course_id', 'course_title', 'price', 'sell_price', 'user_id'
-    ];
+	protected $fillable = ['key','value', 'coupon_id'];
+
 }

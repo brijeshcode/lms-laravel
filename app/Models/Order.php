@@ -11,6 +11,10 @@ class Order extends Model
     use SoftDeletes;
     use HasFactory;
 
+    protected $fillable = [
+        'date', 'order_total', 'order_sub_total', 'order_status', 'user_id'
+    ];
+
     public static function boot()
     {
         parent::boot();
@@ -39,6 +43,11 @@ class Order extends Model
 
     public function items()
     {
-        return $this->hasMany(OrderItems::class, 'order_id')->orderBy('display_order');
+        return $this->hasMany(OrderItems::class, 'order_id');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

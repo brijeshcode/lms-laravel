@@ -117,6 +117,67 @@
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="panel panel-bordered panel-default">
+                                        <div class="panel-heading" style="padding-left: 5px;"><h3>Price Veriations </h3> </div>
+                                        <div class="panel-body">
+                                            @php
+                                                $pIndex = 0;
+                                            @endphp
+                                            <table class="table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Type</th>
+                                                        <th>Duration</th>
+                                                        <th>Price</th>
+                                                        <th>Sell Price</th>
+                                                        <th><span class="btn btn-success" onclick="addpriceVeriations()" >Add</span></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="priceVeriations" >
+                                                    @if ($edit && $dataTypeContent->pricing)
+                                                        @foreach (json_decode($dataTypeContent->pricing) as $pricing)
+                                                            <tr id="price-veriation-{{ $pIndex }}">
+                                                                <td>
+                                                                    <select class="form-control" name="pricing[{{ $pIndex }}][price_type]">
+                                                                        <option>Days</option>
+                                                                        <option>Weeks</option>
+                                                                        <option>Months</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" step="1" min="1" name="pricing[{{ $pIndex }}][duration]" value="{{ $pricing->duration }}" required class="form-control">
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" step="0.01" min="1" name="pricing[{{ $pIndex }}][price]" required class="form-control" value="{{ $pricing->price }}">
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" step="0.01" min="1" name="pricing[{{ $pIndex }}][sell_price]" required class="form-control" value="{{ $pricing->sell_price }}">
+                                                                </td>
+
+                                                                <td>
+                                                                    <span class="btn btn-danger" onclick="deletePriceVeriation('price-veriation-{{ $pIndex }}')">Delete</span>
+                                                                </td>
+                                                            </tr>
+                                                            @php
+                                                                $pIndex++;
+                                                            @endphp
+                                                        @endforeach
+                                                    @endif
+                                                </tbody>
+                                            </table>
+                                            <input type="hidden" id="price-variation-index"  value="{{ $pIndex }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <hr>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="panel panel-bordered panel-default">
                                         <div class="panel-heading" style="padding-left: 5px;"><h3>Curriculum <span class="btn btn-success" onclick="js_addCurriculum()">Add</span></h3> </div>
                                         <div class="panel-body">
                                                 @php
@@ -139,7 +200,7 @@
                                                                     </div>
                                                                 </h4>
                                                             </div>
-                                                            <div id="collapse{{ $index }}" class="panel-collapse collapse in">
+                                                            <div id="collapse{{ $index }}" class="panel-collapse collapse">
                                                                 <div class="panel-body">
                                                                     <div class="form-group">
                                                                         <label>Description</label>
@@ -325,48 +386,48 @@
 </div>
 
 
-    <div class="modal fade modal-danger" id="confirm_delete_modal">
-        <div class="modal-dialog">
-            <div class="modal-content">
+<div class="modal fade modal-danger" id="confirm_delete_modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
 
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal"
-                            aria-hidden="true">&times;</button>
-                    <h4 class="modal-title"><i class="voyager-warning"></i> {{ __('voyager::generic.are_you_sure') }}</h4>
-                </div>
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"
+                        aria-hidden="true">&times;</button>
+                <h4 class="modal-title"><i class="voyager-warning"></i> {{ __('voyager::generic.are_you_sure') }}</h4>
+            </div>
 
-                <div class="modal-body">
-                    <h4>{{ __('voyager::generic.are_you_sure_delete') }} '<span class="confirm_delete_name"></span>'</h4>
-                </div>
+            <div class="modal-body">
+                <h4>{{ __('voyager::generic.are_you_sure_delete') }} '<span class="confirm_delete_name"></span>'</h4>
+            </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">{{ __('voyager::generic.cancel') }}</button>
-                    <button type="button" class="btn btn-danger" id="confirm_delete">{{ __('voyager::generic.delete_confirm') }}</button>
-                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">{{ __('voyager::generic.cancel') }}</button>
+                <button type="button" class="btn btn-danger" id="confirm_delete">{{ __('voyager::generic.delete_confirm') }}</button>
             </div>
         </div>
     </div>
+</div>
 
-    <style type="text/css">
-        .content-title{
-            width: 90%;
-            display: inline-block;
-        }
-        .content-action{
-            width: auto;
-            display: inline-block;
-        }
-        .rewert-lession{
-            cursor: pointer;
-        }
-        .ui-sortable .list-group-item{
+<style type="text/css">
+    .content-title{
+        width: 90%;
+        display: inline-block;
+    }
+    .content-action{
+        width: auto;
+        display: inline-block;
+    }
+    .rewert-lession{
+        cursor: pointer;
+    }
+    .ui-sortable .list-group-item{
 
-            cursor: grab;
-        }
-        .ui-sortable .list-group-item:active{
-            cursor: grabbing;
-        }
-    </style>
+        cursor: grab;
+    }
+    .ui-sortable .list-group-item:active{
+        cursor: grabbing;
+    }
+</style>
     <!-- End Delete File Modal -->
 @stop
 
@@ -470,9 +531,6 @@
                 updateSectionItemsOrders();
               }
             });
-
-
-
         });
 
         function addLesson(){
@@ -534,8 +592,6 @@
             });
 
             $('#curriculum-item-indexer-'+currIndex).val(itemIndex++) ;
-
-
         }
 
         function quizListItem(quizid, text, quizTrId, currIndex, itemIndex ){
@@ -574,7 +630,6 @@
             if (newRow) {
                 $('li.list-group-item.'+lessonTrId).remove();
             }
-
         }
 
         function revertQuiz(quizTrId, text){
@@ -633,6 +688,43 @@
             $('#curriculumn-'+ index).remove();
         }
 
+        function deletePriceVeriation(row){
+            $('#'+row).remove();
+        }
+
+        function addpriceVeriations(){
+
+            var index = $('#price-variation-index').val();
+            var js_html = '';
+
+            js_html += '<tr id="price-veriation-'+index+'">';
+            js_html += '<td>';
+            js_html +=   '<select class="form-control" name="pricing['+index+'][price_type]">';
+            js_html +=      '<option>Days</option>';
+            js_html +=      '<option>Weeks</option>';
+            js_html +=      '<option>Months</option>';
+            js_html +=   '</select>';
+            js_html +=   '</td>';
+            js_html += '<td>';
+            js_html += '<input type="number" step="1" min="1" name="pricing['+index+'][duration]" required class="form-control">';
+            js_html +=   '</td>';
+            js_html +=  '<td>';
+            js_html +=  '<input type="number" step="0.01" min="1" name="pricing['+index+'][price]" required class="form-control">';
+            js_html +=  '</td>';
+            js_html +=  '<td>';
+            js_html +=  '<input type="number" step="0.01" min="1" name="pricing['+index+'][sell_price]" required class="form-control">';
+            js_html +=  '</td>';
+
+            js_html += '<td>';
+            js_html +=  '<span class="btn btn-danger" onclick="deletePriceVeriation(\'price-veriation-'+index+'\')">Delete</span>';
+            js_html += '</td>';
+            js_html += '</tr>';
+
+            $('#priceVeriations').append(js_html);
+
+            $('#price-variation-index').val(++index);
+
+        }
         function js_addCurriculum(){
             var curriculumIndex = $('#curriculum-index').val();
             js_html = '';

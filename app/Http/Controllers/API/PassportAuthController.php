@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 
 
@@ -12,11 +13,16 @@ class PassportAuthController extends Controller
     //
     public function register(Request $request)
     {
-        $this->validate($request, [
-            'name' => 'required|min:4',
-            'email' => 'required|email',
-            'password' => 'required|min:8',
+        $validated = \Validator::make($request->all(), [
+            'name' => 'required|min:4|max:51|unique:users',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|confirmed|min:8'
         ]);
+
+
+        if ($validated->fails()) {
+           return response()->json(['error' =>$validated->errors()], 422);
+        }
 
         $user = User::create([
             'name' => $request->name,
@@ -37,6 +43,7 @@ class PassportAuthController extends Controller
         ];
 
         if (auth()->attempt($data)) {
+
             $token = auth()->user()->createToken('Laravel8PassportAuth')->accessToken;
             return response()->json(['token' => $token], 200);
         } else {
@@ -44,11 +51,21 @@ class PassportAuthController extends Controller
         }
     }
 
+    public function logout()
+	{
+	    if (Auth::check()) {
+	    	Auth::user()->AauthAcessToken()->delete();
+	    }
+ 		return response()->json(['logout' => true], 200);
+	}
+
     public function userInfo()
     {
-     $user = auth()->user();
-
-     return response()->json(['user' => $user], 200);
+		$user = auth()->user();
+		$user = new UserResource(User::with('role')->findOrFail($user->id));
+        return response()->json(['user' => $user], 200);
+        // return response()->json(['data' => $user], 200);
+		// return  $user;
 
     }
 }

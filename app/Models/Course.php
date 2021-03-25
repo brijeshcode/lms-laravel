@@ -2,16 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Section;
+use App\Models\TaxClass;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\User;
-use App\Models\Section;
 
 class Course extends Model
 {
     use HasFactory;
     use SoftDeletes;
+    // protected $with = ['curriculums'];
 
     public function curriculums()
     {
@@ -27,5 +29,10 @@ class Course extends Model
              	$section->delete();
         	});
         });
+    }
+
+    public function taxes()
+    {
+        return $this->belongsTo(TaxClass::class, 'tax_classes_id');
     }
 }

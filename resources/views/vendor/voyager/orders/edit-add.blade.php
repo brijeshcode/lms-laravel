@@ -55,16 +55,7 @@
                                 $dataTypeRows = $dataType->{($edit ? 'editRows' : 'addRows' )};
                             @endphp
 
-                            {{-- <div class="form-group col">
-                                <label class="control-label" for="tinymce.init(window.voyagerTinyMCE.getConfig());name">Title</label>
-                                <input type="text" class="form-control" name="title" placeholder="Title">
-                            </div>
 
-                            <div class="form-group col">
-                                <label class="control-label" for="name">Description</label>
-                                <textarea class="form-control rich_text_box" name="description"></textarea>
-
-                            </div> --}}
 
                             @foreach($dataTypeRows as $row)
                                 <!-- GET THE DISPLAY OPTIONS -->
@@ -107,10 +98,22 @@
                                     <hr>
                                 </div>
                             </div>
+                            <h3>Customer:</h3>
+                            <p style="text-transform:capitalize;"><b>{{ $dataTypeContent->customer->name }}</b></p>
+                            <p style="text-transform:capitalize;"><b>{{ $dataTypeContent->customer->email }}</b></p>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <hr>
+                                </div>
+                            </div>
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="panel panel-bordered panel-default">
-                                        <div class="panel-heading" style="padding-left: 5px;"><h3>Items <span class="btn btn-success" data-toggle="modal" data-target="#courses" >Add</span></h3> </div>
+                                        <div class="panel-heading" style="padding-left: 5px;"><h3>Items
+                                            @if (!$edit)
+                                                <span class="btn btn-success" data-toggle="modal" data-target="#courses" >Add</span>
+                                            @endif
+                                        </h3> </div>
                                         <div class="panel-body">
                                             <p>Order Items | Products</p>
                                         </div>
@@ -128,7 +131,44 @@
                                                     <th class="text-right">Amount</th>
                                                 </tr>
                                             </thead>
+                                            @if ($edit && $dataTypeContent->items()->exists() && count($dataTypeContent->items))
+                                            <tbody class="order-items-body">
+                                                <?php
+                                                    $index = 1;
+                                                ?>
+                                                @foreach ($dataTypeContent->items as $item)
+                                                    <tr class="order-course-course-tr-{{ $item->course_id }}">
+                                                        <td>
+                                                            {{ $index }}
+                                                        </td>
+                                                        <td><b>{!! $item->course_title !!}</b></td>
+                                                        <?php
+                                                            $price = 0;
+                                                            $price = isset($item->sell_price) && !is_null($item->sell_price) ? $item->sell_price : $item->price;
+                                                        ?>
+                                                        <td class="text-right"><span class="currency">$</span>{{ $price }}</td>
+                                                        <td class="text-right">1<input type="hidden" name="orderItems[]" value="3" /></td>
+                                                        <td class="text-right"><span class="currency">$</span>{{ $price }}</td>
+                                                    </tr>
+                                                    @php
+                                                        $index++;
+                                                    @endphp
+                                                @endforeach
+                                            </tbody>
 
+                                            <tfoot>
+                                                <tr>
+                                                    <th colspan="3"></th>
+                                                    <th class="text-right">Sub Total</th>
+                                                    <th class="text-right order-subtotal"><span class="currency">$</span><span class="sub-total-amount">{{ $dataTypeContent->order_total }}</span></th>
+                                                </tr>
+                                                <tr>
+                                                    <th colspan="3"></th>
+                                                    <th class="text-right">Total</th>
+                                                    <th class="text-right order-total"><span class="currency">$</span><span class="total-amount">{{ $dataTypeContent->order_total }}</span></th>
+                                                </tr>
+                                            </tfoot>
+                                            @else
                                             <tbody class="order-items-body">
 
                                             </tbody>
@@ -145,6 +185,8 @@
                                                     <th class="text-right order-total"><span class="currency">$</span><span class="total-amount">0</span></th>
                                                 </tr>
                                             </tfoot>
+                                            @endif
+
                                         </table>
 
                                             <input type="hidden" id="item-index" value="{{ $index }}">
@@ -184,6 +226,8 @@
 
 
 <!-- Courses Modal -->
+@if (!$edit)
+    {{-- expr --}}
 <div id="courses"  class="modal fade" role="dialog">
   <div class="modal-dialog">
 
@@ -227,6 +271,7 @@
 
   </div>
 </div>
+@endif
 
 
 
@@ -280,8 +325,6 @@
     <script>
         var params = {};
         var $file;
-        var courses = JSON.parse('{!! $courses !!}');
-
         function deleteHandler(tag, isMulti) {
           return function() {
             $file = $(this).siblings(tag);
@@ -361,6 +404,9 @@
 
         });
 
+        @php
+            if($add){
+        @endphp
         function addOrderItems(){
 
             itemIndex = $('#item-index').val() ;
@@ -456,8 +502,6 @@
             }
 
             updatePrice(course.sale_price, 'remove');
-
-
         }
 
         function getCourseId(str){
@@ -466,6 +510,10 @@
                 return str.substring(bytr.length);
             }
         }
+
+        @php
+            }
+        @endphp
     </script>
 @stop
 

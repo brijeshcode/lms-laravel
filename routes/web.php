@@ -20,8 +20,6 @@ Route::get('/', function () {
 
 Route::group(['prefix' => 'admin'], function () {
     Voyager::routes();
-
-
 });
 
 	Route::get('admin/payment/gateway/stripe/test', 'App\Http\Controllers\Payments\Gateways\StripeController@test')->name('stripe.test');
