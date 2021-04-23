@@ -28,6 +28,7 @@ class CurriculumItemsResource extends JsonResource
                 $item['name'] = $lesson->title;
                 $item['description'] = $lesson->description;
 
+                $item['video_url'] = $lesson->video_url;
                 $item['duration'] = $lesson->duration;
                 $item['duration_unit'] = $lesson->duration_unit;
                 $item['is_preview'] = $lesson->preview_lesson;

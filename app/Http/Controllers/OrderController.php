@@ -19,7 +19,7 @@ class OrderController extends \TCG\Voyager\Http\Controllers\VoyagerBaseControlle
 {
     public function create(Request $request)
     {
-    	$courses = Course::select('id', 'title', 'price', 'sale_price')->get();
+    	$courses = Course::select('id', 'title', 'pricing')->get();
         $slug 		= $this->getSlug($request);
 
         $dataType 	= Voyager::model('DataType')->where('slug', '=', $slug)->first();
@@ -166,7 +166,6 @@ class OrderController extends \TCG\Voyager\Http\Controllers\VoyagerBaseControlle
             $view = "voyager::$slug.edit-add";
         }
 
-        // return $dataTypeContent->customer->name;
         // $courses  = Course::get();
         /*return $dataTypeContent = Quiz::with([
             'questions'

@@ -17,8 +17,9 @@ class CreateOrderItemsTable extends Migration
             $table->id();
             $table->integer('user_id');
             $table->integer('order_id');
-            $table->integer('course_id');
-            $table->string('course_title');
+            $table->integer('product_id');
+            $table->string('product_type', 50);
+            $table->string('product_title');
             $table->decimal('price', 8, 2);
             $table->decimal('sell_price', 8, 2);
             $table->softDeletes();

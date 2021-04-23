@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Validator;
 
 class CartController extends Controller
 {
-	protected $cart = array();
+    protected $cart = array();
     protected $response = [
         'status' => 200,
         'success' => true,
@@ -21,9 +21,9 @@ class CartController extends Controller
         'data' => '',
     ];
 
-	public function setCart()
-	{
-		if (\Auth::guard('api')->check()) {
+    public function setCart()
+    {
+        if (\Auth::guard('api')->check()) {
             $userID = auth('api')->user()->getKey();
         }
 
@@ -32,18 +32,18 @@ class CartController extends Controller
             'user_id' => isset($userID) ? $userID : null
         ]);
         return  $cart;
-	}
+    }
 
     public function add(Request $request)
     {
-    	// validation
+        // validation
 
-    	$validated = Validator::make($request->all(), [
+        $validated = Validator::make($request->all(), [
             'product_id' => 'required',
             'product_type' => 'required',
             'quantity' => 'required',
             'price' => 'required',
-            'cartKey' => 'required',
+            // 'cartKey' => 'required',
             'quantity' => 'required|integer|gt:0',
         ]);
 
@@ -51,18 +51,18 @@ class CartController extends Controller
            return response()->json(['error' =>$validated->errors()], 422);
         }
 
-    	$cartKey = '';
+        $cartKey = '';
 
         $cartKey = $request->cartKey;
-    	if (isset($request->cartKey)) {
+        if (isset($request->cartKey)) {
             if (! $cart = $this->getCart($request->cartKey)) {
                 $this->response['status'] = 400;
                 $this->response['message'] = 'Error: Invalid cart details [cartKey].';
                 $this->response['success'] = false;
                 return response()->json($this->response, $this->response['status']);
             }
-    	}else{
-    		$cart  = $this->setCart();
+        }else{
+            $cart  = $this->setCart();
         }
 
         $cartKey = $cart->key;
@@ -246,7 +246,7 @@ class CartController extends Controller
 
     public function cartTotal($cartKey)
     {
-    	$total = 0;
+        $total = 0;
         $cart = $this->getCartData($cartKey);
         if ($cart && $cart->items()->exists()) {
             foreach ($cart->items as $item) {
@@ -291,7 +291,7 @@ class CartController extends Controller
             'items.product.taxes:id,name,tax_name,rate,status',
             'coupon',
         ])
-        ->where('key', $key)
+        ->where('key', '=' ,$key)
         ->first();
 
         if ($cart && is_null($cart->user_id)) {
@@ -376,12 +376,21 @@ class CartController extends Controller
     }
 
 
-    public function applyCoupon($cartKey,  $couponCode)
+    public function applyCoupon($cartKey, $couponCode)
     {
-       $cart   = $this->getCartData($cartKey);
+        $cart   = $this->getCartData($cartKey);
+
+        if (is_null($cart)) {
+            $this->response['success'] = false;
+            $this->response['message'] = 'Invalid Cart key: cart not found on given key.';
+            $this->response['status'] = 400;
+            $this->response['data'] = ['cart_key' => $cartKey];
+            return response()->json($this->response, $this->response['status']);
+        }
+
         if (!is_null($cart->coupon_code) && $cart->coupon_code == $couponCode) {
             $this->response['success'] = false;
-            $this->response['message'] = 'Coupons allready applied, cart data.';
+            $this->response['message'] = 'Coupon allready applied, cart data.';
             $this->response['status'] = 400;
             $this->response['data'] = $this->formatCartData($cartKey);
             return response()->json($this->response, $this->response['status']);
@@ -397,7 +406,7 @@ class CartController extends Controller
 
             if (!is_null($coupon->coupon_expiry_date) || $coupon->coupon_expiry_date > Carbon::today()) {
                 $this->response['success'] = false;
-                $this->response['message'] = 'Coupons expired.';
+                $this->response['message'] = 'Coupon expired.';
                 $this->response['status'] = 400;
                 return response()->json($this->response, $this->response['status']);
             }
@@ -409,7 +418,7 @@ class CartController extends Controller
 
         }else{
             $this->response['success'] = false;
-            $this->response['message'] = 'Invalid Coupons code.';
+            $this->response['message'] = 'Invalid Coupon code.';
             $this->response['status'] = 400;
         }
         return response()->json($this->response, $this->response['status']);

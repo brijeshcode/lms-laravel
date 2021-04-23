@@ -33,7 +33,7 @@ Route::prefix('/v1')->group(function (){
 	// cart apis
 	Route::get('coupons', [CouponsController::class, 'get']);
 	Route::get('coupon/get/{couponCode}', [CouponsController::class, 'couponDetails']);
-	Route::get('coupon/apply/{cartKey}/{couponCode}', [CartController::class, 'applyCoupon']);
+	Route::post('coupon/apply/{cartKey}/{couponCode}', [CartController::class, 'applyCoupon']);
 
 	Route::get('lesson/{lessonId}/comments',[LessonController::class, 'getLessonCommentsApi']);
 
@@ -41,5 +41,7 @@ Route::prefix('/v1')->group(function (){
 	    Route::get('get-user', [PassportAuthController::class, 'userInfo']);
 		Route::post('lesson/{lessonId}/comment/add',[LessonController::class, 'addLessonCommentsApi']);
 	});
+
+
 
 });

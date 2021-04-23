@@ -19,12 +19,8 @@ class Lesson extends Model
         return $this->belongsTo(SectionItems::class, 'item_id')->withTrashed();
     }
 
-
     public function comments()
     {
         return $this->hasMany(Comment::class, 'parent_id')->where('comment_for', 'lesson')->where('is_approved', true);
     }
-
-
-
 }

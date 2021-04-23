@@ -98,14 +98,17 @@
                                     <hr>
                                 </div>
                             </div>
+                            @if ($edit)
+                                {{-- expr --}}
                             <h3>Customer:</h3>
-                            <p style="text-transform:capitalize;"><b>{{ $dataTypeContent->customer->name }}</b></p>
-                            <p style="text-transform:capitalize;"><b>{{ $dataTypeContent->customer->email }}</b></p>
+                            <p style="text-transform:capitalize;">Name: <b>{{ $dataTypeContent->customer->name }}</b></p>
+                            <p style="">Email: <b>{{ $dataTypeContent->customer->email }}</b></p>
                             <div class="row">
                                 <div class="col-md-12">
                                     <hr>
                                 </div>
                             </div>
+                            @endif
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="panel panel-bordered panel-default">
@@ -141,7 +144,7 @@
                                                         <td>
                                                             {{ $index }}
                                                         </td>
-                                                        <td><b>{!! $item->course_title !!}</b></td>
+                                                        <td><b>{!! $item->product_title !!}</b></td>
                                                         <?php
                                                             $price = 0;
                                                             $price = isset($item->sell_price) && !is_null($item->sell_price) ? $item->sell_price : $item->price;
@@ -254,6 +257,7 @@
             @endif
             <tr id="course-tr-{{ $course->id }}">
                 <th><label for="course-{{ $course->id }}">{{ $course->title }}</label></th>
+
                 <th><label for="course-{{ $course->id }}"> <del> <span>$</span>{{ $course->price }}</del> <span>$</span>{{ $course->sale_price }}</label></th>
                 <td class="text-center"><input type="checkbox" class="course-checkboxes" coursetitle="{{ $course->title }}" id="course-{{ $course->id }}" coursesaleprice="{{ $course->sale_price }}" courseprice="{{ $course->price }}" courseid="{{ $course->id }}" value="course-tr-{{ $course->id }}"></td>
             </tr>
