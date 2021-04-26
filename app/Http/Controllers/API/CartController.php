@@ -7,6 +7,7 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Coupon;
 use App\Models\Course;
+use App\Models\PackageItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
@@ -20,6 +21,8 @@ class CartController extends Controller
         'message' => '',
         'data' => '',
     ];
+
+    protected $productTypes = ['course', 'package'] ;
 
     public function setCart()
     {
@@ -40,10 +43,10 @@ class CartController extends Controller
 
         $validated = Validator::make($request->all(), [
             'product_id' => 'required',
-            'product_type' => 'required',
+            'product_type' => 'required', // course or package
             'quantity' => 'required',
             'price' => 'required',
-            // 'cartKey' => 'required',
+            // 'cart_key' => 'required',
             'quantity' => 'required|integer|gt:0',
         ]);
 
@@ -51,13 +54,19 @@ class CartController extends Controller
            return response()->json(['error' =>$validated->errors()], 422);
         }
 
-        $cartKey = '';
+        if (!in_array($request->product_type, $this->productTypes)) {
+            $this->response['message'] = 'Invalid Product type';
+            $this->response['status'] = 400;
+            $this->response['success'] = false;
+            return response()->json($this->response, $this->response['status']);
+        }
+        $cart_key = '';
 
-        $cartKey = $request->cartKey;
-        if (isset($request->cartKey)) {
-            if (! $cart = $this->getCart($request->cartKey)) {
+        $cart_key = $request->cart_key;
+        if (isset($request->cart_key)) {
+            if (! $cart = $this->getCart($request->cart_key)) {
                 $this->response['status'] = 400;
-                $this->response['message'] = 'Error: Invalid cart details [cartKey].';
+                $this->response['message'] = 'Error: Invalid cart details [cart_key].';
                 $this->response['success'] = false;
                 return response()->json($this->response, $this->response['status']);
             }
@@ -65,17 +74,14 @@ class CartController extends Controller
             $cart  = $this->setCart();
         }
 
-        $cartKey = $cart->key;
-
-        $this->updateOrAddItem($cartKey, $request, $cart);
-
+        $cart_key = $cart->key;
+        $this->updateOrAddItem($cart_key, $request, $cart);
         return response()->json($this->response, $this->response['status']);
     }
 
     // return cart data
     public function get($key)
     {
-
         $cart = $this->getCartData($key);
         if (!$cart) {
             $this->response['status'] = 400;
@@ -105,21 +111,25 @@ class CartController extends Controller
         return response()->json($this->response, $this->response['status']);
     }
 
-    function getCart($cartKey){
-        $cart = $this->getCartData($cartKey);
+    function getCart($cart_key){
+        $cart = $this->getCartData($cart_key);
         if ($cart) {
             return $cart;
         }
         return false;
     }
 
-    public function remove($cartKey, $productId)
+    public function remove($cart_key, $productId)
     {
-        $cart = $this->getCart($cartKey);
+        $cart = $this->getCart($cart_key);
         if ($cart) {
             foreach ($cart->items as $key => $item) {
                 if ($item->product_id == $productId) {
-                    $tempTitle = $item->product->title;
+                    if ($item->product_type == 'course') {
+                        $tempTitle = $item->product->title;
+                    }elseif($item->product_type == 'package'){
+                        $tempTitle = $item->packageItem->package->name;
+                    }
                     CartItem::destroy($item->id);
                     $this->response['status'] = 200;
                     $this->response['message'] = 'Product: "'.$tempTitle.'" removed successfully.';
@@ -140,9 +150,9 @@ class CartController extends Controller
         return response()->json($this->response, $this->response['status']);
     }
 
-    public function clearCart($cartKey)
+    public function clearCart($cart_key)
     {
-        $cart = Cart::where('key', $cartKey)->first();
+        $cart = Cart::where('key', $cart_key)->first();
         if ($cart) {
             $cart->delete();
         }
@@ -158,7 +168,7 @@ class CartController extends Controller
         return response()->json($this->response, $this->response['status']);
     }
 
-    public function updateOrAddItem($cartKey, $request, $cart = '')
+    public function updateOrAddItem($cart_key, $request, $cart = '')
     {
         $priceStatus = $this->confirmPrice($request->product_id, $request->price, $request->product_type);
         if (!$priceStatus[0]) {
@@ -171,7 +181,7 @@ class CartController extends Controller
         if ($cart) {
             $cartId = $cart->id;
         }else{
-            if ($cart = $this->getCart($cartKey)) {
+            if ($cart = $this->getCart($cart_key)) {
                 $cartId = $cart->id;
             }else{
 
@@ -192,6 +202,7 @@ class CartController extends Controller
         $item = [
             'cart_id' => $cartId,
             'product_id' => $request->product_id,
+            'product_type' => $request->product_type,
             'quantity' => $request->quantity,
             'price' => $request->price,
         ];
@@ -213,8 +224,13 @@ class CartController extends Controller
 
         if($cartItem){
             $this->response['status'] = 201;
-            $this->response['message'] = 'Product: '.$cartItem->product->title.' added to cart.';
+            if ($request->product_type == 'course') {
+                $this->response['message'] = 'Product: '.$cartItem->product->title.' added to cart.';
+            }elseif($request->product_type == 'package'){
+                $this->response['message'] = 'Product: '.$cartItem->packageItem->package->name.' added to cart.';
+            }
             $this->response['success'] = true;
+            $this->response['data'] = ['cart_key' => $cart_key];
             return $this->response;
         }
 
@@ -227,15 +243,15 @@ class CartController extends Controller
         return $items = CartItem::where('cart_id', $cartId)->get();
     }
 
-    public function countPro($cartKey)
+    public function countPro($cart_key)
     {
-        $cart = $this->getCartData($cartKey);
+        $cart = $this->getCartData($cart_key);
         return $cart->items->count();
     }
 
-    public function countQty($cartKey){
+    public function countQty($cart_key){
         $count = 0;
-        $cart = $this->getCartData($cartKey);
+        $cart = $this->getCartData($cart_key);
         if ($cart && $cart->items()->exists()) {
             foreach ($cart->items as $item) {
                 $count += $item->quantity;
@@ -244,10 +260,10 @@ class CartController extends Controller
         return $count;
     }
 
-    public function cartTotal($cartKey)
+    public function cartTotal($cart_key)
     {
         $total = 0;
-        $cart = $this->getCartData($cartKey);
+        $cart = $this->getCartData($cart_key);
         if ($cart && $cart->items()->exists()) {
             foreach ($cart->items as $item) {
                 $total += $item->price;
@@ -280,6 +296,12 @@ class CartController extends Controller
             }else{
                 return [false, 'Error: Invalid product',400];
             }
+        }elseif ($type == 'package') {
+            $packageItem = PackageItem::find($productId);
+            if (!is_null($packageItem) && $price ==  $packageItem->total_cost ) {
+                return [true, 'Success: Matched',200];
+            }
+            return [false, 'Error: Invalid price',400];
         }
     }
 
@@ -287,7 +309,8 @@ class CartController extends Controller
         $cart = Cart::select('id', 'key', 'status', 'coupon_code', 'user_id')
         ->with([
             'items:id,cart_id,product_id,product_type,product_description,quantity,price',
-            'items.product:id,title,pricing,tax_classes_id,tax_status',
+            'items.product:id,title,pricing,tax_classes_id,is_taxable',
+            'items.packageItem',
             'items.product.taxes:id,name,tax_name,rate,status',
             'coupon',
         ])
@@ -326,33 +349,56 @@ class CartController extends Controller
             $index = 0;
 
             foreach ($cart->items as $value) {
-                $product[$index]['name'] = $value->product->title;
+                if ($value->product_type == 'package') {
+                    $product[$index]['name'] = $value->packageItem->package->name;
+                }else if($value->product_type == 'course'){
+                    $product[$index]['name'] = $value->product->title;
+                }
+
                 $product[$index]['type'] = $value->product_type;
                 $product[$index]['quantity'] = $value->quantity;
+                $product[$index]['product_id'] = $value->product_id;
                 $product[$index]['sub_total'] = $value->price;
                 $product[$index]['tax_price_inclusive'] = setting('site.tax_price_inclusive');
                 $product[$index]['taxable'] = false;
                 $product[$index]['sub_total'] = $value->price * $value->quantity;
                 $product[$index]['total'] = $product[$index]['sub_total'];
 
+                if ($value->product_type == 'course') {
+                    # code...
+                    if ($value->product->is_taxable && !is_null($value->product->taxes)) {
+                        $product[$index]['taxable'] = true;
+                        $product[$index]['tax']['rate'] = $value->product->taxes->rate;
+                        $product[$index]['tax']['name'] = $value->product->taxes->name;
+                        $product[$index]['tax']['tax_name'] = $value->product->taxes->tax_name;
+                        $product[$index]['tax']['amount'] = ($value->product->taxes->rate / 100) * $product[$index]['sub_total'];
 
-                if ($value->product->tax_status == 'taxable' && !is_null($value->product->taxes)) {
-                    $product[$index]['taxable'] = true;
-                    $product[$index]['tax']['rate'] = $value->product->taxes->rate;
-                    $product[$index]['tax']['name'] = $value->product->taxes->name;
-                    $product[$index]['tax']['tax_name'] = $value->product->taxes->tax_name;
-                    $product[$index]['tax']['amount'] = ($value->product->taxes->rate / 100) * $product[$index]['sub_total'];
+                        if (!$product[$index]['tax_price_inclusive']) {
+                            $product[$index]['total'] = $product[$index]['sub_total'] + $product[$index]['tax']['amount'];
+                        }else{
+                            $product[$index]['total'] = $product[$index]['sub_total'];
+                        }
 
-                    if (!$product[$index]['tax_price_inclusive']) {
-                        $product[$index]['total'] = $product[$index]['sub_total'] + $product[$index]['tax']['amount'];
-                    }else{
-                        $product[$index]['total'] = $product[$index]['sub_total'];
+                        $data->cart_total_tax += $product[$index]['tax']['amount'];
                     }
+                }else if($value->product_type == 'package'){
+                    $package = $value->packageItem->package;
+                    if ($package->is_taxable && !is_null($package->taxes)) {
+                        $product[$index]['taxable'] = true;
+                        $product[$index]['tax']['rate'] = $package->taxes->rate;
+                        $product[$index]['tax']['name'] = $package->taxes->name;
+                        $product[$index]['tax']['tax_name'] = $package->taxes->tax_name;
+                        $product[$index]['tax']['amount'] = ($package->taxes->rate / 100) * $product[$index]['sub_total'];
 
-                    $data->cart_total_tax += $product[$index]['tax']['amount'];
+                        if (!$product[$index]['tax_price_inclusive']) {
+                            $product[$index]['total'] = $product[$index]['sub_total'] + $product[$index]['tax']['amount'];
+                        }else{
+                            $product[$index]['total'] = $product[$index]['sub_total'];
+                        }
 
+                        $data->cart_total_tax += $product[$index]['tax']['amount'];
+                    }
                 }
-
 
                 $data->cart_total_quantity += $product[$index]['quantity'];
                 $data->cart_sub_total += $product[$index]['total'];
@@ -376,15 +422,15 @@ class CartController extends Controller
     }
 
 
-    public function applyCoupon($cartKey, $couponCode)
+    public function applyCoupon($cart_key, $couponCode)
     {
-        $cart   = $this->getCartData($cartKey);
+        $cart   = $this->getCartData($cart_key);
 
         if (is_null($cart)) {
             $this->response['success'] = false;
             $this->response['message'] = 'Invalid Cart key: cart not found on given key.';
             $this->response['status'] = 400;
-            $this->response['data'] = ['cart_key' => $cartKey];
+            $this->response['data'] = ['cart_key' => $cart_key];
             return response()->json($this->response, $this->response['status']);
         }
 
@@ -392,7 +438,7 @@ class CartController extends Controller
             $this->response['success'] = false;
             $this->response['message'] = 'Coupon allready applied, cart data.';
             $this->response['status'] = 400;
-            $this->response['data'] = $this->formatCartData($cartKey);
+            $this->response['data'] = $this->formatCartData($cart_key);
             return response()->json($this->response, $this->response['status']);
         }
 
@@ -414,7 +460,7 @@ class CartController extends Controller
             $cart->coupon_code = $couponCode;
             $cart->save();
             $this->response['message'] = 'Coupon Detail.';
-            $this->response['data'] = $this->formatCartData($cartKey);
+            $this->response['data'] = $this->formatCartData($cart_key);
 
         }else{
             $this->response['success'] = false;

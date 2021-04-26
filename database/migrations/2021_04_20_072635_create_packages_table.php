@@ -20,6 +20,8 @@ class CreatePackagesTable extends Migration
             $table->bigInteger('service_id')->unsigned()->index();
             $table->bigInteger('service_type_id')->unsigned()->index()->nullable();
             $table->integer('starts')->default(0);
+            $table->boolean('is_taxable')->defalut(0);
+            $table->integer('tax_class_id')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

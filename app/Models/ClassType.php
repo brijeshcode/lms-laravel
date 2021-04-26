@@ -10,6 +10,4 @@ class ClassType extends Model
 {
     use SoftDeletes;
     use HasFactory;
-
-
 }

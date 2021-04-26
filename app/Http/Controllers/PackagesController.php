@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\PackageCollection;
 use App\Models\Batches;
 use App\Models\ClassType;
 use App\Models\Package;
 use App\Models\PackageItem;
 use App\Models\Service;
 use App\Models\ServiceType;
+use App\Models\TaxClass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -54,7 +56,9 @@ class PackagesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseContro
         $classTypes = ClassType::get();
         $servies = Service::with('types')->get();
         $batches = Batches::get();
-        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable' , 'servies' , 'batches', 'classTypes' ));
+
+        $taxClasses = TaxClass::get();
+        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable' , 'servies', 'taxClasses' , 'batches', 'classTypes' ));
     }
 
     /**
@@ -112,7 +116,9 @@ class PackagesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseContro
             'name' => $package->name,
             'class_type_id' => $package->class_type_id,
             'service_id' => $serType->service_id,
-            'service_type_id' => $package->service_type_id
+            'service_type_id' => $package->service_type_id,
+            'is_taxable' => $package->is_taxable,
+            'tax_class_id' => $package->tax_class_id
         ]);
 
         $package = $package->items()->createMany($pData);
@@ -150,6 +156,7 @@ class PackagesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseContro
             if ($model && in_array(SoftDeletes::class, class_uses_recursive($model))) {
                 $model = $model->withTrashed();
             }
+
             if ($dataType->scope && $dataType->scope != '' && method_exists($model, 'scope'.ucfirst($dataType->scope))) {
                 $model = $model->{$dataType->scope}();
             }
@@ -202,8 +209,9 @@ class PackagesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseContro
             ];
         }
         // return $batchItems;
+        $taxClasses = TaxClass::get();
 
-        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'batches','servies', 'batchItems', 'classTypes'));
+        return Voyager::view($view, compact('dataType', 'dataTypeContent', 'isModelTranslatable', 'batches','servies', 'batchItems', 'classTypes', 'taxClasses'));
     }
 
 
@@ -242,6 +250,8 @@ class PackagesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseContro
         $package->service_id = $serType->service_id;
         $package->class_type_id = $request->class_type_id;
         $package->service_type_id = $request->service_type_id;
+        $package->is_taxable = $request->is_taxable;
+        $package->tax_class_id = $request->tax_class_id;
 
         $package->save();
 
@@ -307,6 +317,10 @@ class PackagesController extends \TCG\Voyager\Http\Controllers\VoyagerBaseContro
         ]);
     }
 
-
+    public function getApiPackages()
+    {
+        $packages = Package::with(['taxes', 'class' , 'service', 'type','items' ])->paginate();
+        return $packages = new PackageCollection($packages);
+    }
 
 }

@@ -57,14 +57,14 @@
 
                             @if (!$edit)
                                 <div class="row">
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <div class="">
                                             <label>Name *</label>
                                             <input type="text" name="name" required class="form-control">
                                         </div>
                                     </div>
 
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <div class="">
                                             <label>Classes Type</label>
                                             <select class="form-control" name="class_type_id">
@@ -90,6 +90,24 @@
                                     </div>
 
 
+
+                                    <div class="form-group  col-md-2" >
+                                        <label class="control-label" for="name">Taxable</label>
+                                        <select class="form-control">
+                                            <option value="0">None</option>
+                                            <option value="1">Is Taxable</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group  col-md-3 ">
+                                        <label class="control-label" for="name">Tax Class</label>
+                                        <select class="form-control" name="tax_class_id">
+                                            <option value="0">None</option>
+                                            @foreach ($taxClasses as $class)
+                                                <option value="{{ $class->id }}">{{ $class->name }} | {{ $class->tax_name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-12">
@@ -184,14 +202,14 @@
                                 </div>
                             @else
                                 <div class="row">
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <div class="">
                                             <label>Name *</label>
                                             <input type="text" name="name" value="{{ $dataTypeContent->name }}" required class="form-control">
                                         </div>
                                     </div>
 
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <div class="">
                                             <label>Classes Type</label>
                                             <select class="form-control" name="class_type_id">
@@ -214,6 +232,24 @@
                                                 @endforeach
                                             </select>
                                         </div>
+                                    </div>
+
+                                    <div class="form-group col-md-2" >
+                                        <label class="control-label" >Taxable</label>
+                                        <select class="form-control" name="is_taxable">
+                                            <option {{ $dataTypeContent->is_taxable == 0 ? 'selected' : ''  }}value="0">None</option>
+                                            <option {{ $dataTypeContent->is_taxable == 1 ? 'selected' : ''  }} value="1">Is Taxable</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group col-md-3 ">
+                                        <label class="control-label" for="name">Tax Class</label>
+                                        <select class="form-control" name="tax_class_id">
+                                            <option value="0">None</option>
+                                            @foreach ($taxClasses as $class)
+                                                <option {{ $dataTypeContent->tax_class_id == $class->id ? 'selected' : ''  }} value="{{ $class->id }}">{{ $class->name }} | {{ $class->tax_name }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
 
                                 </div>
